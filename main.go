@@ -33,3 +33,21 @@ var albums = []album{
 func getAlbums(c *gin.Context) {
     c.IndentedJSON(http.StatusOK, albums)
 }
+
+// 6. Hardcoded secrets and debug information
+func hardcodedSecrets(c *gin.Context) {
+    // Hardcoded credentials (SAST detectable)
+    apiKey := "AKIAIOSFODNN7EXAMPLE" // AWS key pattern
+    password := "SuperSecret123!"    // Hardcoded password
+    jwtSecret := "secretkey"         // Weak JWT secret
+    
+    // Debug information exposure
+    debugInfo := map[string]string{
+        "api_key":    apiKey,
+        "password":   password,
+        "jwt_secret": jwtSecret,
+        "version":    "1.0.0-debug",
+    }
+    
+    c.JSON(http.StatusOK, debugInfo)
+}
