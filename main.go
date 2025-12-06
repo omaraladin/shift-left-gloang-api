@@ -2,8 +2,9 @@ package main
 
 import (
     "net/http"
-
+	
     "github.com/gin-gonic/gin"
+	"github.com/mattn/go-sqlite3" 
 )
 
 // album represents data about a record album.
