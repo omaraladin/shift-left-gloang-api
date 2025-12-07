@@ -34,6 +34,23 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+    # Run the OWASP Dependency-Check Action
+    - name: Run OWASP Dependency-Check
+      uses: dependency-check/Dependency-Check_Action@v4.1.0 # Use a specific version for stability
+      id: Depcheck
+      with:
+        project: 'golang-api' # Name of the project
+        path: '.' # Scan the whole repository workspace
+        format: 'HTML,JSON' # Generate easy-to-read HTML and machine-readable JSON reports
+        out: 'reports' # Output reports to a 'reports' directory
+
+    # Upload the generated reports as an artifact
+    - name: Upload OWASP Dependency-Check Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: OWASP-Dependency-Check-Report
+        path: reports/ # Upload the entire reports directory       
+
 #    - name: Upload Artifacts
 #      uses: actions/upload-artifact@v3
 #      with:
