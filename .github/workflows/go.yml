@@ -37,6 +37,11 @@ jobs:
   appsec:
     runs-on: ubuntu-latest
     steps:
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.25'
+        
     - uses: actions/checkout@v4
 
     # Run the OWASP Dependency-Check Action
@@ -50,11 +55,11 @@ jobs:
         out: 'reports'
               
     # Upload the generated reports as an artifact
-    - name: Upload OWASP Dependency-Check Report
+    - name: Upload SCA Report
       uses: actions/upload-artifact@v4
       with:
         name: OWASP-Dependency-Check-Report
-        path: reports/
+        path: reports/dependency-check-report.html
 
 #    - name: Upload Artifacts
 #      uses: actions/upload-artifact@v3
