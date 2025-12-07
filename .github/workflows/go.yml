@@ -36,7 +36,7 @@ jobs:
 
     # Run the OWASP Dependency-Check Action
     - name: Run OWASP Dependency-Check
-      uses: dependency-check/Dependency-Check_Action@v4
+      uses: dependency-check/Dependency-Check_Action@main
       id: Depcheck
       with:
         project: 'golang-api' # Name of the project
