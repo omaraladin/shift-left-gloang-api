@@ -34,6 +34,11 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+  appsec:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
     # Run the OWASP Dependency-Check Action
     - name: Run OWASP Dependency-Check
       uses: dependency-check/Dependency-Check_Action@main
@@ -43,18 +48,13 @@ jobs:
         path: '.'
         format: 'HTML'
         out: 'reports'
-
-  appsec:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      
+              
     # Upload the generated reports as an artifact
     - name: Upload OWASP Dependency-Check Report
       uses: actions/upload-artifact@v4
       with:
         name: OWASP-Dependency-Check-Report
-        path: reports/ # Upload the entire reports directory       
+        path: reports/
 
 #    - name: Upload Artifacts
 #      uses: actions/upload-artifact@v3
