@@ -39,10 +39,10 @@ jobs:
       uses: dependency-check/Dependency-Check_Action@main
       id: Depcheck
       with:
-        project: 'golang-api' # Name of the project
-        path: '.' # Scan the whole repository workspace
-        format: 'HTML,JSON' # Generate easy-to-read HTML and machine-readable JSON reports
-        out: 'reports' # Output reports to a 'reports' directory
+        project: 'golang-api'
+        path: '.'
+        format: 'HTML'
+        out: 'reports'
 
     # Upload the generated reports as an artifact
     - name: Upload OWASP Dependency-Check Report
