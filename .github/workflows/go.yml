@@ -8,9 +8,6 @@ on:
      branches: 
        - main
 
-permissions:
-  contents: write
-  
 jobs:
 
   build:
@@ -48,27 +45,15 @@ jobs:
       uses: aquasecurity/trivy-action@0.20.0
       with:
         scan-type: 'fs'
-        format: 'github'
-        output: 'dependency-results.sbom.json'
+        format: 'table'
+        output: 'sbom-table.txt'
         scan-ref: '.'
-        github-pat: ${{ secrets.GITHUB_TOKEN }}
-    # - name: Upload Trivy report
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: sbom-trivy-report
-    #     path: sbom-trivy-report.json
 
-    # - name: Install and Run govulncheck
-    #   run: |
-    #     go install golang.org/x/vuln/cmd/govulncheck@latest
-    #     export PATH=$PATH:$(go env GOPATH)/bin
-    #     govulncheck ./... > sca-report.txt
-
-    # - name: Upload report artifact
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: sca-report
-    #     path: sca-report.txt
+    - name: Upload Trivy report
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom-trivy-report
+        path: sbom-table.txt
 
 #    - name: Upload Artifacts
 #      uses: actions/upload-artifact@v3
