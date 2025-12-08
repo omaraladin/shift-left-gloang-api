@@ -47,16 +47,16 @@ jobs:
     - name: Install Trivy
       uses: aquasecurity/trivy-action@0.20.0
       with:
-        scan-type: fs 
-        scan-ref: .
-        format: json
-        output: sbom-trivy-report.json
-
-    - name: Upload Trivy report
-      uses: actions/upload-artifact@v4
-      with:
-        name: sbom-trivy-report
-        path: sbom-trivy-report.json
+        scan-type: 'fs'
+        format: 'github'
+        output: 'dependency-results.sbom.json'
+        scan-ref: '.'
+        github-pat: ${{ secrets.GITHUB_TOKEN }}
+    # - name: Upload Trivy report
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: sbom-trivy-report
+    #     path: sbom-trivy-report.json
 
     # - name: Install and Run govulncheck
     #   run: |
