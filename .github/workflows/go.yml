@@ -41,25 +41,19 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.25'
-        
+
     - uses: actions/checkout@v4
 
-    # Run the OWASP Dependency-Check Action
-    - name: Run OWASP Dependency-Check
-      uses: dependency-check/Dependency-Check_Action@main
-      id: Depcheck
-      with:
-        project: 'golang-api'
-        path: '.'
-        format: 'HTML'
-        out: 'reports'
-              
-    # Upload the generated reports as an artifact
-    - name: Upload SCA Report
+    - name: Run govulncheck
+      run: |
+        export PATH=$PATH:$(go env GOPATH)/bin
+        govulncheck ./... > govulncheck-report.txt
+
+    - name: Upload report artifact
       uses: actions/upload-artifact@v4
       with:
-        name: OWASP-Dependency-Check-Report
-        path: reports/dependency-check-report.html
+        name: govulncheck-report
+        path: govulncheck-report.txt
 
 #    - name: Upload Artifacts
 #      uses: actions/upload-artifact@v3
