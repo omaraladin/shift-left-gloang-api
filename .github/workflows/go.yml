@@ -44,16 +44,17 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - name: Run govulncheck
+    - name: Install and Run govulncheck
       run: |
+        go install golang.org/x/vuln/cmd/govulncheck@latest
         export PATH=$PATH:$(go env GOPATH)/bin
-        govulncheck ./... > govulncheck-report.txt
+        govulncheck ./... > sca-report.txt
 
     - name: Upload report artifact
       uses: actions/upload-artifact@v4
       with:
-        name: govulncheck-report
-        path: govulncheck-report.txt
+        name: sca-report
+        path: sca-report.txt
 
 #    - name: Upload Artifacts
 #      uses: actions/upload-artifact@v3
