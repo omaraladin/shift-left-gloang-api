@@ -44,17 +44,31 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - name: Install and Run govulncheck
-      run: |
-        go install golang.org/x/vuln/cmd/govulncheck@latest
-        export PATH=$PATH:$(go env GOPATH)/bin
-        govulncheck ./... > sca-report.txt
+    - name: Install Trivy
+      uses: aquasecurity/trivy-action@0.20.0
+      with:
+        scan-type: fs 
+        scan-ref: .
+        format: json
+        output: sbom-trivy-report.json
 
-    - name: Upload report artifact
+    - name: Upload Trivy report
       uses: actions/upload-artifact@v4
       with:
-        name: sca-report
-        path: sca-report.txt
+        name: sbom-trivy-report
+        path: sbom-trivy-report.json
+
+    # - name: Install and Run govulncheck
+    #   run: |
+    #     go install golang.org/x/vuln/cmd/govulncheck@latest
+    #     export PATH=$PATH:$(go env GOPATH)/bin
+    #     govulncheck ./... > sca-report.txt
+
+    # - name: Upload report artifact
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: sca-report
+    #     path: sca-report.txt
 
 #    - name: Upload Artifacts
 #      uses: actions/upload-artifact@v3

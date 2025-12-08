@@ -13,6 +13,7 @@ import (
     "time"
 
     "github.com/gin-gonic/gin"
+    jwt "github.com/dgrijalva/jwt-go"
     _ "github.com/go-sql-driver/mysql"
 )
 
@@ -51,6 +52,9 @@ func main() {
 
     // Insecure TLS client endpoint
     router.GET("/fetch", insecureFetch) // ?url=https://expired.badssl.com/
+
+    // Demo vulnerable library usage (JWT) - for demonstration only
+    router.GET("/token", demoToken)
 
 	// Run the server
     router.Run("localhost:8080")
@@ -154,4 +158,24 @@ func insecureFetch(c *gin.Context) {
     defer resp.Body.Close()
     b, _ := ioutil.ReadAll(resp.Body)
     c.Data(http.StatusOK, "text/plain", b)
+}
+
+// demoToken shows a tiny, non-exploit use of a vulnerable JWT library.
+// It creates a signed token with a short expiry. Do not use in production.
+func demoToken(c *gin.Context) {
+    // Create a token object
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+        "sub": "demo",
+        "iat": time.Now().Unix(),
+        "exp": time.Now().Add(1 * time.Minute).Unix(),
+    })
+
+    // Use a short, hardcoded secret for demo only
+    secret := []byte("demo_secret")
+    tokStr, err := token.SignedString(secret)
+    if err != nil {
+        c.String(http.StatusInternalServerError, "token error")
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"token": tokStr})
 }
