@@ -2,14 +2,9 @@ module examplegolang-api
 
 go 1.25.5
 
-require (
-	github.com/gin-gonic/gin v1.11.0
-	github.com/golang-jwt/jwt/v4 v4.4.3
-	github.com/go-sql-driver/mysql v1.9.3
-)
+require github.com/gin-gonic/gin v1.11.0
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect

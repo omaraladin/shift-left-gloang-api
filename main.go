@@ -1,82 +1,45 @@
 package main
 
 import (
-    "crypto/md5"
-    "crypto/tls"
-    "database/sql"
-    "encoding/hex"
-    "fmt"
-    "io/ioutil"
-    "math/rand"
     "net/http"
     "os"
-    "os/exec"
     "strings"
-    "time"
 
     "github.com/gin-gonic/gin"
-    jwt "github.com/golang-jwt/jwt/v4"
-    _ "github.com/go-sql-driver/mysql"
 )
 
-// Hardcoded configuration values (for demo purposes only)
-const apiKey = "sk_live_DEMO_123456"
-const dbUser = "demo_user"
-const dbPass = "P@ssword!23"
-const dbDSN  = dbUser + ":" + dbPass + "@tcp(localhost:3306)/demo"
-
-// album represents data about a record album.
-type album struct {
+// albums slice to seed record album data.
+var albums = []struct {
     ID     string  `json:"id"`
     Title  string  `json:"title"`
     Artist string  `json:"artist"`
     Price  float64 `json:"price"`
+}{
+    {ID: "1", Title: "Master of Puppets", Artist: "Metallica", Price: 30.00},
+    {ID: "2", Title: "All Hope is gone", Artist: "Slipknot", Price: 30.00},
+    {ID: "3", Title: "Multitude", Artist: "Stromae", Price: 39.99},
+    {ID: "4", Title: "Mutter", Artist: "Rammstein", Price: 39.99},
 }
 
 func main() {
-    // Predictable randomness (SAST should flag)
-    rand.Seed(42)
+    r := gin.Default()
+    r.GET("/albums", func(c *gin.Context) {
+        c.JSON(http.StatusOK, albums)
+    })
 
-    router := gin.Default()
-    router.GET("/albums", getAlbums)
-
-    // SQL injection endpoint
-    router.GET("/search", searchAlbums) // ?q=Metallica' OR '1'='1
-
-    // Command injection endpoint
-    router.GET("/ping", pingHost) // ?host=127.0.0.1 ; rm -rf /
-
-    // Path traversal endpoint
-    router.GET("/file", readFile) // ?name=../main.go
-
-    // Weak password hashing endpoint
-    router.POST("/hash", hashPassword)
-
-    // Insecure TLS client endpoint
-    router.GET("/fetch", insecureFetch) // ?url=https://expired.badssl.com/
-
-    // Demo vulnerable library usage (JWT) - for demonstration only
-    router.GET("/token", demoToken)
-
-    // Run the server with environment-based port selection
     addr := listenAddress()
-    router.Run(addr)
+    r.Run(addr)
 }
 
 // listenAddress picks a listen address based on APP_ENV and optional PORT.
-// Behavior:
-// - If PORT is set, use that port on all interfaces (":<PORT>").
-// - Otherwise map APP_ENV to defaults: Dev -> 8080, Staging -> 8081, Prod -> 80.
-// - Unknown APP_ENV falls back to 8080.
+// If PORT is set it will be used; otherwise Dev -> 8080, Staging -> 8081, Prod -> 8085.
 func listenAddress() string {
     if p := strings.TrimSpace(os.Getenv("PORT")); p != "" {
-        // If an explicit port is provided, listen on all interfaces.
         if strings.Contains(p, ":") {
             return p
         }
         return ":" + p
     }
-
     env := strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
     switch env {
     case "dev", "development":
@@ -88,124 +51,4 @@ func listenAddress() string {
     default:
         return "localhost:8080"
     }
-}
-
-// albums slice to seed record album data.
-var albums = []album{
-    {ID: "1", Title: "Master of Puppets", Artist: "Metallica", Price: 30.00},
-    {ID: "2", Title: "All Hope is gone", Artist: "Slipknot", Price: 30.00},
-    {ID: "3", Title: "Multitude", Artist: "Stromae", Price: 39.99},
-    {ID: "4", Title: "Mutter", Artist: "Rammstein", Price: 39.99},
-}
-
-// getAlbums responds with the list of all albums as JSON.
-func getAlbums(c *gin.Context) {
-    c.IndentedJSON(http.StatusOK, albums)
-}
-
-// SQL injection: unsafe string concat with user input
-func searchAlbums(c *gin.Context) {
-    q := c.Query("q")
-    db, err := sql.Open("mysql", dbDSN)
-    if err != nil {
-        c.String(http.StatusInternalServerError, "DB error")
-        return
-    }
-    defer db.Close()
-
-    // Vulnerable query (use prepared statements in real code)
-    query := fmt.Sprintf("SELECT id, title, artist, price FROM albums WHERE title LIKE '%%%s%%' OR artist LIKE '%%%s%%'", q, q)
-    rows, err := db.Query(query)
-    if err != nil {
-        c.String(http.StatusInternalServerError, "Query error")
-        return
-    }
-    defer rows.Close()
-
-    var results []album
-    for rows.Next() {
-        var a album
-        if err := rows.Scan(&a.ID, &a.Title, &a.Artist, &a.Price); err != nil {
-            continue
-        }
-        results = append(results, a)
-    }
-    c.JSON(http.StatusOK, gin.H{"query": q, "results": results})
-}
-
-// Command injection: passes user input to shell
-func pingHost(c *gin.Context) {
-    host := c.Query("host")
-    cmd := exec.Command("sh", "-c", "ping -c 1 "+host)
-    out, err := cmd.CombinedOutput()
-    if err != nil {
-        c.String(http.StatusInternalServerError, "Command error: %v", err)
-        return
-    }
-    c.String(http.StatusOK, string(out))
-}
-
-// Path traversal: reads arbitrary files based on input
-func readFile(c *gin.Context) {
-    name := c.Query("name")
-    // Vulnerable: no sanitization or allowlist
-    data, err := ioutil.ReadFile("./data/" + name)
-    if err != nil {
-        c.String(http.StatusNotFound, "Read error")
-        return
-    }
-    c.Data(http.StatusOK, "text/plain", data)
-}
-
-// Weak crypto: MD5 for password hashing
-func hashPassword(c *gin.Context) {
-    var body struct {
-        Password string `json:"password"`
-    }
-    if err := c.BindJSON(&body); err != nil {
-        c.String(http.StatusBadRequest, "Bad request")
-        return
-    }
-    h := md5.Sum([]byte(body.Password))
-    c.JSON(http.StatusOK, gin.H{"md5": hex.EncodeToString(h[:])})
-}
-
-// Insecure TLS: skip certificate verification
-func insecureFetch(c *gin.Context) {
-    url := c.Query("url")
-    tr := &http.Transport{
-        TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Vulnerable
-    }
-    client := &http.Client{
-        Transport: tr,
-        Timeout: 5 * time.Second,
-    }
-    resp, err := client.Get(url)
-    if err != nil {
-        c.String(http.StatusBadGateway, "Fetch error")
-        return
-    }
-    defer resp.Body.Close()
-    b, _ := ioutil.ReadAll(resp.Body)
-    c.Data(http.StatusOK, "text/plain", b)
-}
-
-// demoToken shows a tiny, non-exploit use of a vulnerable JWT library.
-// It creates a signed token with a short expiry. Do not use in production.
-func demoToken(c *gin.Context) {
-    // Create a token object
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-        "sub": "demo",
-        "iat": time.Now().Unix(),
-        "exp": time.Now().Add(1 * time.Minute).Unix(),
-    })
-
-    // Use a short, hardcoded secret for demo only
-    secret := []byte("demo_secret")
-    tokStr, err := token.SignedString(secret)
-    if err != nil {
-        c.String(http.StatusInternalServerError, "token error")
-        return
-    }
-    c.JSON(http.StatusOK, gin.H{"token": tokStr})
 }
