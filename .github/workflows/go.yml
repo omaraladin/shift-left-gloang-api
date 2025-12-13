@@ -28,6 +28,12 @@ jobs:
     - name: Test
       run: go test .
 
+    - name: Upload Go Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: go-build
+        path: examplegolang-api
+
   appsec:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/main'
@@ -39,7 +45,7 @@ jobs:
 
     - name: Build
       run: go build .
-      
+
     - uses: actions/checkout@v4
 
     - name: SonarQube Scan
