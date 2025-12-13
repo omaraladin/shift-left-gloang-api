@@ -9,7 +9,9 @@ import (
     "io/ioutil"
     "math/rand"
     "net/http"
+    "os"
     "os/exec"
+    "strings"
     "time"
 
     "github.com/gin-gonic/gin"
@@ -56,8 +58,36 @@ func main() {
     // Demo vulnerable library usage (JWT) - for demonstration only
     router.GET("/token", demoToken)
 
-	// Run the server
-    router.Run("localhost:8080")
+    // Run the server with environment-based port selection
+    addr := listenAddress()
+    router.Run(addr)
+}
+
+// listenAddress picks a listen address based on APP_ENV and optional PORT.
+// Behavior:
+// - If PORT is set, use that port on all interfaces (":<PORT>").
+// - Otherwise map APP_ENV to defaults: Dev -> 8080, Staging -> 8081, Prod -> 80.
+// - Unknown APP_ENV falls back to 8080.
+func listenAddress() string {
+    if p := strings.TrimSpace(os.Getenv("PORT")); p != "" {
+        // If an explicit port is provided, listen on all interfaces.
+        if strings.Contains(p, ":") {
+            return p
+        }
+        return ":" + p
+    }
+
+    env := strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
+    switch env {
+    case "dev", "development":
+        return "localhost:8080"
+    case "staging":
+        return "localhost:8081"
+    case "prod", "production":
+        return "0.0.0.0:8085"
+    default:
+        return "localhost:8080"
+    }
 }
 
 // albums slice to seed record album data.
